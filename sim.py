@@ -9,12 +9,13 @@ next_complain_dist = np.random.poisson
 claim_dist = np.random.binomial
 leave_client_dist = np.random.poisson
 
-n0_clients = 5
-a0_initial_budget = 10000
-cost = 100
-
+N0_CLIENTS = 5
+A0_INITIAL_BUDGET = 10000
+COST = 100
 MAX_TIME = 1_000_000
 MAX_CLAIM = 5_000
+CLIENT_THRESHOLD = 0
+
 lambda_next_client = 1
 lambda_leave_client = 2
 lambda_next_complaint = 5
@@ -23,8 +24,9 @@ amount_tests = 50
 
 
 def generate_complain(distribution_function_complain, distribution_function_claim):
+    u = np.random.random()
     time_to_complain = distribution_function_complain(lambda_next_complaint)
-    claim_amount = distribution_function_claim(MAX_CLAIM, np.random.random())
+    claim_amount = distribution_function_claim(MAX_CLAIM, u)
 
     return time_to_complain, claim_amount
 
@@ -36,8 +38,8 @@ def generate_client(distribution_function_client, distribution_function_leave):
     return next_client, leave_client
 
 
-def ensurance_simulation(next_client_dist, next_complain_dist, claim_dist, leave_client_dist, n0_clients,
-                         a0_initial_budget, cost):
+def insurance_simulation(next_client_dist, next_complain_dist, claim_dist, leave_client_dist, n0_clients,
+                         a0_initial_budget, cost, client_threshold):
     total_clients = n0_clients
     total_complaints = 0
     time = 0
@@ -64,7 +66,7 @@ def ensurance_simulation(next_client_dist, next_complain_dist, claim_dist, leave
 
             next_complaint, claim = generate_complain(next_complain_dist, claim_dist)
 
-            while len(clients) > 0 and clients[0] <= t:
+            while len(clients) > client_threshold and clients[0] <= t:
                 num_clients -= 1
                 heappop(clients)
 
@@ -75,17 +77,17 @@ def ensurance_simulation(next_client_dist, next_complain_dist, claim_dist, leave
 
         else:
             t = next_client
-
             if next_client < next_complaint:
                 next_complaint -= t
 
             num_clients += 1
             total_clients += 1
+
             heappush(clients, leave_client)
             budget = budget + num_clients * t * cost
             next_client, leave_client = generate_client(next_client_dist, leave_client_dist)
 
-            while len(clients) > 0 and clients[0] <= t:
+            while len(clients) > client_threshold and clients[0] <= t:
                 num_clients -= 1
                 heappop(clients)
 
@@ -97,18 +99,7 @@ def ensurance_simulation(next_client_dist, next_complain_dist, claim_dist, leave
     return MAX_TIME, total_clients, total_complaints
 
 
-results = [ensurance_simulation(next_client_dist, next_complain_dist, claim_dist, leave_client_dist, n0_clients,
-                                a0_initial_budget, cost) for _ in range(amount_tries)]
+results = [insurance_simulation(next_client_dist, next_complain_dist, claim_dist, leave_client_dist, N0_CLIENTS,
+                                A0_INITIAL_BUDGET, COST, CLIENT_THRESHOLD) for _ in range(amount_tries)]
 
-
-# with open('data.json', 'r') as f:
-#     data = json.load(f)
-
-# varianzas = [d['varianza'] for d in data]
-# print('Varianza: ', min(varianzas), max(varianzas))
-
-# desviaciones_estandar = [d['desviacion_estandar'] for d in data]
-# print('Desviacion: ', min(desviaciones_estandar), max(desviaciones_estandar))
-
-# medias = [d['media'] for d in data]
-# print('Medias: 'min(medias), max(medias))
+print(results)
