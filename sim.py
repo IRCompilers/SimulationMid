@@ -9,17 +9,17 @@ next_complain_dist = np.random.poisson
 claim_dist = np.random.binomial
 leave_client_dist = np.random.poisson
 
-N0_CLIENTS = 5
-A0_INITIAL_BUDGET = 10000
+N0_CLIENTS = 10
+A0_INITIAL_BUDGET = 10_000
 COST = 100
 MAX_TIME = 1_000_000
 MAX_CLAIM = 5_000
 CLIENT_THRESHOLD = 0
 
 lambda_next_client = 1
-lambda_leave_client = 2
+lambda_leave_client = 5
 lambda_next_complaint = 5
-amount_tries = 100
+amount_tries = 10
 amount_tests = 50
 
 
@@ -102,4 +102,25 @@ def insurance_simulation(next_client_dist, next_complain_dist, claim_dist, leave
 results = [insurance_simulation(next_client_dist, next_complain_dist, claim_dist, leave_client_dist, N0_CLIENTS,
                                 A0_INITIAL_BUDGET, COST, CLIENT_THRESHOLD) for _ in range(amount_tries)]
 
-print(results)
+total_clientes = [j for i,j,k in results]
+total_complaints = [k for i,j,k in results]
+max_time = [i for i,j,k in results] 
+
+media_max_time = sum(max_time)/len(max_time)
+media_total_clients = sum(total_clientes)/len(total_clientes)
+media_total_complaints = sum(total_complaints)/len(total_complaints)
+
+def varianza(media, data):
+    return (sum([(i-media)**2 for i in data]))/len(data)
+
+varianza_max_time = np.var(max_time)
+varianza_total_clients = np.var(total_clientes)
+varianza_total_complaints = np.var(total_complaints)
+
+desv_estan_max_time = varianza_max_time**1/2
+desv_estan_total_clients = varianza_total_clients**1/2
+desv_estan_total_complaints = varianza_total_complaints**1/2
+
+print(media_max_time, media_total_clients, media_total_complaints)
+print(varianza_max_time, varianza_total_clients, varianza_total_complaints)
+print(desv_estan_max_time, desv_estan_total_clients, desv_estan_total_complaints)
